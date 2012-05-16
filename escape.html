@@ -1,0 +1,277 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Escape - Esc serves config 2</title>
+		<!--script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-1.7.2.min.js"></script-->
+		<script type="text/javascript" charset="utf-8" src="jquery-1.7.2.min.js"></script>
+		<script type="text/javascript" charset="utf-8" src="jquery.dataTables.js"></script>
+
+		<style>
+			body{
+				margin: 0;
+				padding: 0;
+				background-color: darkblue;
+			}
+			table{
+				border-spacing: 0px;
+			}
+			table, td, th{
+				border-width: 0px;
+				white-space:nowrap;
+			}
+			table td, table th {
+				padding-left: 0.5em;
+				padding-right: 0.5em;
+			}
+			#loading, .loading{
+				position: absolute;
+				top: 1em;
+				right: 1em;
+			}
+			#loading {
+				color: orange;
+				display: block;
+			}
+			.loading{
+				color: white;
+				display: none;
+			}
+			#header{
+				background-color: lightblue;
+			}
+			#header h1{
+				margin: 0;
+				padding: 1em;
+			}
+			#header img{
+				float: left;
+				top: 0;
+				padding-left: 5em;
+				padding-right: 5em;
+			}
+			.project{
+				position: relative;
+				background-color: darkblue;
+			}
+			.project.hover {
+				background-color: blue;
+				
+			}
+			.project .title {
+				padding: 0.5em;
+				color: orange;
+				font-weight: bold;
+				cursor: pointer;
+				cursor: hand;
+			}
+			.project .environments {
+				background-color: gray;
+				display: none;
+			}
+			.project .environments table{
+				background-color: gray;
+			}
+			.project .environments th{
+				text-align: left;
+			}
+			.project .values.hover {
+				background-color: lightblue;
+			}
+		</style>
+		<script type="text/javascript" charset="utf-8">
+		//var server="http://192.168.110.1:8080/";
+		var server="http://localhost/"; // with a proxy to the real server to avoid cross-domain restriction
+		var defaultEnvironment = "default";
+		var environmentNames = [];
+		
+		function loading(name){
+			if (name){
+				$(".loading."+name).show();
+			} 
+			$("#loading").show();
+		}
+		
+		function endLoading(name){
+			if (name){
+				$(".loading."+name).fadeOut();
+			}
+			$("#loading").fadeOut();
+		}
+		
+		function loadEnvironment(projectName, $environments){
+			var values = [];
+			var varnames = [];
+			for (var envIndex = 0; envIndex < environmentNames.length; envIndex++) {
+				var currentEnv = envIndex;
+				$.ajax({
+					url:server+'environments/'+environmentNames[currentEnv]+'/'+projectName, 
+					async: false,
+					success: function(conf, status, jqXHR) {
+						if (conf){
+							values[currentEnv] = [];
+							var lines = conf.split("\n");
+							for (var lineIndex = 0; lineIndex < lines.length; lineIndex++){
+								var parts = lines[lineIndex].split("->");
+								var varname = parts[0];
+								values[currentEnv][lineIndex] = parts[1];
+								// only set the variables with the first environment
+								if (currentEnv == 0){
+									varnames[lineIndex] = varname;
+								}
+							}
+						}
+					}
+				});
+			}
+			
+			var htmlContent = "<table><tr><th></th>";
+			for (var i = 0; i < environmentNames.length; i++){
+				htmlContent += "<th>"+environmentNames[i]+"</th>";
+			}
+			htmlContent += "</tr>";
+			htmlContent += "</table>";
+			
+			var $content = $(htmlContent);
+			if (varnames.length > 0){
+				for (var i = 0; i < varnames.length; i++){
+				
+					var $tr = $("<tr class=\"values\"><th>"+varnames[i]+"</th></tr>");
+					for (var j = 0; j < environmentNames.length; j++){
+						var $td = $("<td class=\"editable-value\">"+values[j][i]+"</td>");
+						$td.data("project", projectName);
+						$td.data("env",environmentNames[j]);
+						$td.data("var", varnames[i]);
+						$tr.append($td);
+					}
+					$content.append($tr);
+				}
+			}
+			
+			$environments.html($content);
+			$environments.slideDown();
+			$environments.find(".values").hover(
+				function(){
+					$(this).addClass("hover");
+				},
+				function(){
+					$(this).removeClass("hover");
+				});
+			makeEditable($environments);
+		}
+		
+		function loadEnvironments(){
+			$.ajax({
+				url: server+'environments', 
+				success: function(envs, status, jqXHR) {
+					for (var i = 0; i < envs.length; i++){
+						environmentNames[environmentNames.length] = envs[i];
+					}
+				}
+			});
+		}
+		
+		function loadProjects(){
+			loading();
+			$.ajax({
+				url: server+'environments/'+defaultEnvironment, 
+				success: function(projects, status, jqXHR) {
+					for (var i = 0; i < projects.length; i++){
+						$("#projects").append("<div class=\"project "+projects[i]+"\"><div class=\"title\">"+projects[i]+"</div>"+
+							"<div class=\"loading "+projects[i]+"\">Loading...</div>" +
+							"<div class=\"environments\"></div></div>");
+					};
+					
+					$(".project").hover(
+						function(){
+							$(this).addClass("hover");
+						},
+						function(){
+							$(this).removeClass("hover");
+						}
+					);
+					
+					$(".project .title").click(function(){
+						var environments = $(this).parent().find(".environments");
+						var projectName = $(this).html();
+						if (environments.is(":visible")){
+							environments.slideUp();
+						} else {
+							loading(projectName);
+							loadEnvironment(projectName, environments);
+							endLoading(projectName);
+						}
+					});
+				}
+			});
+			endLoading();
+		}
+		
+		function cancelEditing($elem, value){
+			$elem.html(value);
+			$elem.click(selfEditable);
+			$elem.addClass('editable-value');
+		}
+		
+		function selfEditable(){
+			var $elem = $(this);
+			var content = $elem.html();
+			var projectName = $elem.parents(".project").find(".title").html();
+			
+			var input = $("<input type=\"text\" name=\""+$elem.data("var")+"\" value=\""+content+"\" />");
+			$elem.off('click');
+			$elem.removeClass('editable-value');
+			$elem.html(input);
+			input.css("width", "100%");
+			input.focus();
+			input.blur(function(){
+				cancelEditing($elem, content);
+			});
+			input.keyup(function(e){
+				if(e.which == 13){
+					updateValue($elem, input.val(), content);
+				} else if(e.which == 27){
+					cancelEditing($elem, content);
+				}
+			});
+
+		}
+		
+		function updateValue($elem, newVal, oldVal){
+			var proj = $elem.data("project");
+			var env = $elem.data("env");
+			var varname = $elem.data("var");
+			$.ajax({
+				url: server+'environments/'+env+'/'+proj+'/'+varname, 
+				type: 'PUT',
+				data: newVal,
+				success: function(projects, status, jqXHR) {
+					cancelEditing($elem, newVal);
+				}, 
+				error: function(jqXHR, textStatus, errorThrown) {
+					cancelEditing($elem, oldVal);
+				}
+			});
+		}
+		
+		function makeEditable($parent){
+			$parent.find(".editable-value").click(selfEditable);
+		}
+		
+		$(document).ready(function(){
+			loadProjects();
+			loadEnvironments();
+		});
+		</script>
+    </head>
+    <body>
+		<div id="header">
+			<img src="http://192.168.110.1:8080/images/logo.jpg" />
+			<h1>ESCAPE</h1>
+			<div id="loading" class="loading">LOADING...</div>
+		</div>
+		<div id="projects">
+		
+		</div>
+    </body>
+</html>
