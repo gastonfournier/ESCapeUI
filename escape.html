@@ -5,9 +5,18 @@
         <title>Escape - Esc serves config 2</title>
 		<!--script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-1.7.2.min.js"></script-->
 		<script type="text/javascript" charset="utf-8" src="jquery-1.7.2.min.js"></script>
-		<script type="text/javascript" charset="utf-8" src="jquery.dataTables.js"></script>
 
 		<style>
+			#doc {
+			    left: 415px;
+			    position: absolute;
+			    top: 50px;
+			}
+			#doc, #doc a {
+			    color: darkblue;
+			    font-size: small;
+			    text-decoration: none;
+			}
 			body{
 				margin: 0;
 				padding: 0;
@@ -65,6 +74,10 @@
 				cursor: pointer;
 				cursor: hand;
 			}
+			.values th{
+				cursor: pointer;
+				cursor: hand;
+			}
 			.project .environments {
 				background-color: gray;
 				display: none;
@@ -75,7 +88,10 @@
 			.project .environments th{
 				text-align: left;
 			}
-			.project .values.hover {
+			.project .values.rowSelected {
+				background-color: lightgray;
+			}
+			.project .values.hover, .project .values.rowSelected.hover {
 				background-color: lightblue;
 			}
 		</style>
@@ -260,6 +276,16 @@
 		$(document).ready(function(){
 			loadProjects();
 			loadEnvironments();
+			
+			// props clickables
+			$(".values th").live('click', function(){ 
+				var parent = $(this).parent();
+				if (parent.hasClass("rowSelected")){
+					parent.removeClass("rowSelected");
+				} else {
+					parent.addClass("rowSelected");
+				}
+			});
 		});
 		</script>
     </head>
@@ -267,6 +293,7 @@
 		<div id="header">
 			<img src="http://192.168.110.1:8080/images/logo.jpg" />
 			<h1>ESCAPE</h1>
+			<div id="doc">Si deseás colaborar: <a href="https://github.com/gastonfournier/ESCapeUI">https://github.com/gastonfournier/ESCapeUI</a></div>
 			<div id="loading" class="loading">LOADING...</div>
 		</div>
 		<div id="projects">
