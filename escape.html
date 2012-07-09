@@ -20,7 +20,7 @@
 			body{
 				margin: 0;
 				padding: 0;
-				background-color: darkblue;
+				background-color: #A3D6F3;
 			}
 			table{
 				border-spacing: 0px;
@@ -30,7 +30,6 @@
 				white-space:nowrap;
 			}
 			table td, table th {
-				padding-left: 0.5em;
 				padding-right: 0.5em;
 			}
 			#loading, .loading{
@@ -61,15 +60,21 @@
 			}
 			.project{
 				position: relative;
-				background-color: darkblue;
+				background-color: white;
+			}
+			.project.open{
+				position: relative;
+				background-color: #caecff;
+				padding-bottom: 1em;
+				padding-left: 1em;
 			}
 			.project.hover {
-				background-color: blue;
+				background-color: #a3d6f3;
 				
 			}
 			.project .title {
 				padding: 0.5em;
-				color: orange;
+				color: darkblue;
 				font-weight: bold;
 				cursor: pointer;
 				cursor: hand;
@@ -79,20 +84,20 @@
 				cursor: hand;
 			}
 			.project .environments {
-				background-color: gray;
 				display: none;
 			}
-			.project .environments table{
-				background-color: gray;
+			.project .environments table {
+				background-color: #046094;
+				color: #E7E7E7;
 			}
 			.project .environments th{
 				text-align: left;
 			}
 			.project .values.rowSelected {
-				background-color: lightgray;
+				background-color: #004064;
 			}
 			.project .values.hover, .project .values.rowSelected.hover {
-				background-color: lightblue;
+				background-color: #0873b0;
 			}
 		</style>
 		<script type="text/javascript" charset="utf-8">
@@ -207,14 +212,18 @@
 					);
 					
 					$(".project .title").click(function(){
-						var environments = $(this).parent().find(".environments");
+						var parent = $(this).parent();
+						var environments = parent.find(".environments");
 						var projectName = $(this).html();
 						if (environments.is(":visible")){
-							environments.slideUp();
+							environments.slideUp(400, function(){
+								parent.removeClass("open");
+							});
 						} else {
 							loading(projectName);
 							loadEnvironment(projectName, environments);
 							endLoading(projectName);
+							parent.addClass("open");
 						}
 					});
 				}
