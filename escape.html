@@ -158,11 +158,14 @@
 				
 					var $tr = $("<tr class=\"values\"><th>"+varnames[i]+"</th></tr>");
 					for (var j = 0; j < environmentNames.length; j++){
-						var $td = $("<td class=\"editable-value\">"+values[j][i]+"</td>");
-						$td.data("project", projectName);
-						$td.data("env",environmentNames[j]);
-						$td.data("var", varnames[i]);
-						$tr.append($td);
+						// check if the environment exists
+						if (values[j]){
+							var $td = $("<td class=\"editable-value\">"+values[j][i]+"</td>");
+							$td.data("project", projectName);
+							$td.data("env",environmentNames[j]);
+							$td.data("var", varnames[i]);
+							$tr.append($td);
+						}
 					}
 					$content.append($tr);
 				}
