@@ -135,8 +135,8 @@
 								var parts = lines[lineIndex].split("->");
 								var varname = parts[0];
 								values[currentEnv][lineIndex] = parts[1];
-								// only set the variables with the first environment
-								if (currentEnv == 0){
+								// only set the variables if unset
+								if (!varnames[lineIndex]){
 									varnames[lineIndex] = varname;
 								}
 							}
@@ -147,7 +147,9 @@
 			
 			var htmlContent = "<table><tr><th></th>";
 			for (var i = 0; i < environmentNames.length; i++){
-				htmlContent += "<th>"+environmentNames[i]+"</th>";
+				if (values[i]){
+					htmlContent += "<th>"+environmentNames[i]+"</th>";
+				}
 			}
 			htmlContent += "</tr>";
 			htmlContent += "</table>";
@@ -303,7 +305,11 @@
     </head>
     <body>
 		<div id="header">
-			<img src="http://192.168.110.1:8080/images/logo.jpg" />
+			<script>
+			$(document).ready(function(){ 
+				$("#header").prepend("<img src=\""+server+"images/logo.jpg\" />");
+			});
+			</script>
 			<h1>ESCAPE</h1>
 			<div id="doc">Si deseás colaborar: <a href="https://github.com/gastonfournier/ESCapeUI">https://github.com/gastonfournier/ESCapeUI</a></div>
 			<div id="loading" class="loading">LOADING...</div>
