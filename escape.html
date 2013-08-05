@@ -103,12 +103,27 @@
 				background-color: #770000;
 				border: 1px solid #046094;
 				color: white;
-				padding: 1px;
+				padding-left: 1px;
+				padding-right: 1px;
+				margin-left: 3px;
+				margin-right: 3px;
 			}
 			.delete-var:hover {
 				background-color: #FF0000;
 				cursor: pointer;
                                 cursor: hand;
+			}
+			.add-var {
+				color: #00FF00;
+				cursor: pointer;
+				cursor: hand;
+				display: block;
+				font-weight: normal;
+				text-align: center;
+			}
+			.add-var:hover {
+				color: #33FF33;
+				background-color: #0873b0;
 			}
 		</style>
 		<script type="text/javascript" charset="utf-8">
@@ -166,6 +181,10 @@
 			htmlContent += "</table>";
 			
 			var $content = $(htmlContent);
+			var $addlink = $("<a class=\"add-var\">(+) add</a>");
+			$addlink.data("project", projectName);
+			$addlink.click(addVariable);
+			$content.find("th:first").append($addlink);
 			if (varnames.length > 0){
 				for (var i = 0; i < varnames.length; i++){
 				
@@ -188,7 +207,7 @@
 						$deleteLink.data("project", projectName);
 						$deleteLink.data("var", varnames[i]);
 						$deleteLink.click(ensureDelete);
-						$tr.prepend($deleteLink);
+						$tr.find("th:first").prepend($deleteLink);
 					}
 
 					$content.append($tr);
@@ -277,6 +296,20 @@
 				loading(project);
 				loadEnvironment(project, $(this).parents(".environments"));
 				endLoading(project);
+			}
+		}
+
+		function addVariable(){
+			var varname = prompt("Enter the name of the variable");
+			if (varname){
+			    var project = $(this).data("project");
+			    $.ajax({
+                                url: server+'environments/'+defaultEnvironment+'/'+project+'/'+varname, 
+                                type: "PUT"
+                            });
+                            loading(project);
+                            loadEnvironment(project, $(this).parents(".environments"));
+                            endLoading(project);
 			}
 		}
 
