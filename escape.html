@@ -99,9 +99,20 @@
 			.project .values.hover, .project .values.rowSelected.hover {
 				background-color: #0873b0;
 			}
+			.delete-var {
+				background-color: #770000;
+				border: 1px solid #046094;
+				color: white;
+				padding: 1px;
+			}
+			.delete-var:hover {
+				background-color: #FF0000;
+				cursor: pointer;
+                                cursor: hand;
+			}
 		</style>
 		<script type="text/javascript" charset="utf-8">
-		var server="http://"+window.location.hostname+"/";
+		var server="http://"+window.location.hostname+":"+window.location.port+"/";
 		var defaultEnvironment = "default";
 		var environmentNames = [];
 		
@@ -159,6 +170,7 @@
 				for (var i = 0; i < varnames.length; i++){
 				
 					var $tr = $("<tr class=\"values\"><th>"+varnames[i]+"</th></tr>");
+					var deleteEnabled = false;
 					for (var j = 0; j < environmentNames.length; j++){
 						// check if the environment exists
 						if (values[j]){
@@ -167,8 +179,18 @@
 							$td.data("env",environmentNames[j]);
 							$td.data("var", varnames[i]);
 							$tr.append($td);
+							deleteEnabled = true;
 						}
 					}
+
+					if (deleteEnabled){
+						var $deleteLink = $("<a class=\"delete-var\" title=\"Delete variable\">x</a>");
+						$deleteLink.data("project", projectName);
+						$deleteLink.data("var", varnames[i]);
+						$deleteLink.click(ensureDelete);
+						$tr.prepend($deleteLink);
+					}
+
 					$content.append($tr);
 				}
 			}
@@ -236,6 +258,28 @@
 			endLoading();
 		}
 		
+		function ensureDelete(){
+			var project = $(this).data("project");
+			var varname = $(this).data("var");
+			if (confirm("Are you sure you want to delete "+varname+" from all environments of "+project+"?")){
+				for (var i = 0; i < environmentNames.length; i++){
+				    if (environmentNames[i] != defaultEnvironment){
+					$.ajax({
+	        				url: server+'environments/'+environmentNames[i]+'/'+project+'/'+varname, 
+						type: "DELETE"
+				    	});
+				    }
+				}
+				$.ajax({
+        				url: server+'environments/'+defaultEnvironment+'/'+project+'/'+varname, 
+					type: "DELETE"
+			    	});
+				loading(project);
+				loadEnvironment(project, $(this).parents(".environments"));
+				endLoading(project);
+			}
+		}
+
 		function cancelEditing($elem, value){
 			$elem.html(value);
 			$elem.click(selfEditable);
